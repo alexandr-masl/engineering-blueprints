@@ -239,6 +239,8 @@ Rules:
 * Recreate channels after reconnect.
 * Reassert exchanges, queues, bindings, and consumers after reconnect.
 * Reinitialize publishers after reconnect.
+* Required publishers must reconnect proactively after connection or channel
+  close; they must not wait for the next publish attempt.
 * Treat closed channels as unhealthy.
 * Never assume a channel remains valid forever.
 
@@ -270,7 +272,15 @@ Rules:
 
 * Publisher initialization must be awaited during startup.
 * Publisher state must be exposed in readiness.
-* Publisher channel close must trigger reinitialization.
+* Publisher connection or channel close must mark the publisher unhealthy and
+  schedule proactive reinitialization.
+* Publisher close handlers must be attached to the underlying connection and
+  channel, not only to publish failures.
+* Publisher reconnect must retry with capped backoff while the broker is still
+  booting.
+* Publisher reconnect must not depend on the next call to `publish`.
+* Publisher reconnect attempt counters must reflect real reconnect attempts and
+  reset or stabilize after a successful reconnect.
 * Publishing should fail fast if the publisher is not ready.
 * Critical publish paths should use confirms when message durability matters.
 
@@ -289,9 +299,12 @@ Good:
 ```ts
 class PublisherManager {
   private publisher?: Publisher;
+  private reconnectTimer?: NodeJS.Timeout;
+  private shuttingDown = false;
 
   async init() {
     this.publisher = await createPublisher();
+    this.bindPublisherCloseHandlers();
   }
 
   assertReady() {
@@ -304,8 +317,35 @@ class PublisherManager {
     this.assertReady();
     return this.publisher!.publish(message);
   }
+
+  private bindPublisherCloseHandlers() {
+    this.publisher!.on('close', () => {
+      this.publisher = undefined;
+      this.scheduleReconnect();
+    });
+  }
+
+  private scheduleReconnect() {
+    if (this.shuttingDown || this.reconnectTimer) return;
+
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = undefined;
+
+      try {
+        await this.init();
+      } catch {
+        this.scheduleReconnect();
+      }
+    }, nextReconnectDelayMs());
+  }
 }
 ```
+
+Implementation warning:
+
+> A required publisher that reconnects only on the next publish can keep
+> `/health/ready` stuck at `503` after RabbitMQ recovers. Readiness checks the
+> publisher, so the publisher must recover without waiting for new traffic.
 
 ---
 
@@ -895,18 +935,35 @@ This catches the issue where a pod is `Running` but has no active consumers.
 
 Goal:
 
-> Publishing after broker restart should recover.
+> Required publishers reconnect proactively after broker restart and readiness
+> can recover without waiting for a new publish.
 
 Test:
 
 ```text
 1. Initialize publisher.
 2. Publish message successfully.
-3. Restart RabbitMQ.
-4. Wait for reconnect/re-init.
-5. Publish again.
-6. Assert publish succeeds.
+3. Stop RabbitMQ.
+4. Assert readiness becomes false because the publisher is unhealthy.
+5. Start RabbitMQ.
+6. Wait for the publisher reconnect timer to reinitialize the channel.
+7. Assert readiness becomes true before any new publish is attempted.
+8. Publish again.
+9. Assert publish succeeds.
 ```
+
+Required variants:
+
+```text
+1. Close the publisher connection or channel directly.
+2. Assert proactive reconnect is scheduled without calling publish.
+3. Keep RabbitMQ unavailable during the first reconnect attempt.
+4. Assert reconnect is retried with bounded backoff.
+5. Assert reconnect attempt accounting is correct.
+```
+
+This catches the Stage 4 gap where consumers recover but the publisher remains
+`reconnecting` because reconnect is lazy and only happens on the next publish.
 
 ---
 
@@ -1072,6 +1129,10 @@ Expose counters and gauges for every critical runtime component.
 rabbitmq_connection_status
 rabbitmq_reconnect_attempts_total
 rabbitmq_channel_closed_total
+rabbitmq_publisher_status
+rabbitmq_publisher_reconnect_attempts_total
+rabbitmq_publisher_reconnect_failures_total
+rabbitmq_publisher_last_reconnect_success_timestamp
 rabbitmq_publish_failures_total
 rabbitmq_consumer_active_count
 rabbitmq_expected_consumer_count
@@ -1085,6 +1146,7 @@ Alert examples:
 
 ```text
 required consumer count < expected consumer count for 1 minute
+required publisher stuck reconnecting beyond recovery window
 publish failures > 0 in 5 minutes
 DLQ depth > 0
 queue depth grows continuously for 10 minutes
@@ -1333,6 +1395,8 @@ Before merging a service that uses RabbitMQ, Redis, WebSockets, or long-running 
 [ ] Consumers are re-registered after reconnect.
 [ ] Expected consumers are tracked in health status.
 [ ] Publisher readiness is tracked.
+[ ] Required publishers proactively reconnect after channel/connection close.
+[ ] Readiness can recover after RabbitMQ returns without waiting for new traffic.
 [ ] Handler ack/nack behavior is explicit.
 [ ] Poison messages cannot retry forever.
 [ ] Queue contracts are centralized.

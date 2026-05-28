@@ -32,6 +32,39 @@ Startup answers: has initialization completed?
 
 Use this when slow startup would otherwise cause premature restarts.
 
+## Functional Readiness Checks
+
+For services that use MongoDB, RabbitMQ, Redis, WebSockets, timers, or
+background workers, readiness must validate functional runtime state, not just
+process uptime.
+
+At minimum, include these checks when the dependency is part of the service
+contract:
+
+- MongoDB is connected, if required.
+- RabbitMQ is connected, if required.
+- Expected RabbitMQ consumers are active.
+- Required publishers are initialized.
+- Required publishers are not stuck in `reconnecting` after the broker has
+  recovered.
+- Redis is connected, if required.
+- Required Redis subscriptions are active, if applicable.
+- Required WebSocket streams are connected and fresh, if applicable.
+- Required timers and background loops have completed within their allowed
+  success window.
+
+These checks belong in readiness, not liveness. A recoverable dependency outage
+should normally remove the service from readiness without forcing a container
+restart.
+
+Readiness recovery must not depend on new user traffic or new broker messages.
+For example, after RabbitMQ restarts, a required publisher must reconnect
+proactively so `/health/ready` can return to healthy even when no new publish is
+attempted.
+
+For the architecture rationale and service design rules, see
+[Microservice Resilience Blueprint](../architecture/microservice-resilience-blueprint.md).
+
 ## Response Shape
 
 Health responses should include:

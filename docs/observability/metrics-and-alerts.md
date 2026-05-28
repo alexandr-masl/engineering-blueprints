@@ -11,6 +11,8 @@ degradation visible before users report incidents.
 - readiness and liveness state
 - dependency connection state
 - broker consumer state
+- publisher state
+- publisher reconnect attempts and failures
 - publish successes and failures
 - message processing latency
 - retry counts
@@ -28,6 +30,7 @@ Alert on sustained user-impacting or service-contract failures:
 - readiness false for longer than the recovery window
 - repeated dependency reconnects
 - dead required consumer
+- required publisher stuck reconnecting beyond its recovery window
 - stale required WebSocket feed
 - queue depth or lag above threshold
 - background loop not successful within expected interval

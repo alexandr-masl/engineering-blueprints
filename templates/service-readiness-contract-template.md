@@ -27,9 +27,9 @@
 
 ## Publishers
 
-| Broker | Exchange/topic | Message type | Required | Failure behavior |
-| --- | --- | --- | --- | --- |
-|  |  |  |  |  |
+| Broker | Exchange/topic | Message type | Required | Readiness signal | Reconnect behavior | Failure behavior |
+| --- | --- | --- | --- | --- | --- | --- |
+|  |  |  |  |  |  |  |
 
 ## Subscriptions
 
@@ -70,4 +70,5 @@
 - [ ] Invalid configuration failure
 - [ ] Required dependency outage
 - [ ] Required dependency recovery
+- [ ] Required publisher proactive reconnect without a new publish
 - [ ] Graceful shutdown

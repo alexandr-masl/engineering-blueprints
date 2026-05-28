@@ -17,12 +17,16 @@ Use this checklist before declaring a microservice production-ready.
 - [ ] Readiness checks functional required behavior.
 - [ ] Readiness includes required consumers, publishers, subscriptions, and
       background loops.
+- [ ] Readiness can recover after dependency recovery without waiting for new
+      user traffic or broker messages.
 - [ ] Health responses include actionable failure reasons.
 
 ## Resilience
 
 - [ ] Required dependency outage removes readiness.
 - [ ] Required dependency recovery restores runtime objects.
+- [ ] Required publishers proactively reconnect after connection or channel
+      close.
 - [ ] Retry behavior is bounded.
 - [ ] Queues and buffers are bounded.
 - [ ] Poison messages or invalid payloads cannot block the system indefinitely.
@@ -38,5 +42,6 @@ Use this checklist before declaring a microservice production-ready.
 - [ ] Startup tests exist.
 - [ ] Required dependency outage tests exist.
 - [ ] Recovery tests exist.
+- [ ] Publisher reconnect tests prove readiness recovers without a new publish.
 - [ ] Graceful shutdown tests exist.
 - [ ] Tests assert externally visible behavior.
