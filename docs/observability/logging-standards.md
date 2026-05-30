@@ -17,6 +17,9 @@ Log structured events for:
 - publish failure after retry exhaustion
 - Redis reconnect and subscription restoration
 - WebSocket reconnect and stale data detection
+- WebSocket ownership claim, renewal failure, ownership loss, and reclaim
+- listen-key or session-key refresh failure and replacement
+- duplicate WebSocket listener prevention
 - background loop failure and recovery
 - graceful shutdown begin and complete
 

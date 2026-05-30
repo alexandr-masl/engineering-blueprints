@@ -20,6 +20,9 @@ degradation visible before users report incidents.
 - Redis errors and latency
 - WebSocket connection count and reconnect count
 - WebSocket message freshness
+- WebSocket heartbeat freshness
+- WebSocket ownership renewals and ownership loss
+- listen-key refresh successes, failures, and expiry time
 - background loop success and failure timestamps
 - request rate, error rate, and latency
 
@@ -32,6 +35,8 @@ Alert on sustained user-impacting or service-contract failures:
 - dead required consumer
 - required publisher stuck reconnecting beyond its recovery window
 - stale required WebSocket feed
+- lost WebSocket ownership for a required stream
+- listen-key refresh failures above threshold
 - queue depth or lag above threshold
 - background loop not successful within expected interval
 - publish failures above threshold

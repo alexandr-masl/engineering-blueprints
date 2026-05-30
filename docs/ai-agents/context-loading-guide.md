@@ -9,6 +9,12 @@ first:
 3. [Integration Testing Blueprint](../testing/integration-testing-blueprint.md)
 4. Service-specific README or readiness contract
 
+For services with WebSocket streams, Redis stream ownership, exchange-style
+listen keys, or duplicate listener risks, also load:
+
+1. [WebSocket Runtime Ownership Blueprint](../architecture/websocket-runtime-ownership-blueprint.md)
+2. [WebSocket Integration Test Blueprint](../testing/websocket-integration-test-blueprint.md)
+
 The agent must not implement broker consumers, publishers, WebSocket managers,
 runtime subscriptions, background loops, or health checks without following
 these standards.

@@ -9,6 +9,10 @@
 - restores Redis subscriptions after reconnect
 - reports not ready when market data becomes stale
 - resubscribes to market data after WebSocket reconnect
+- keeps quiet account stream ready when heartbeat and listen key are fresh
+- reports not ready when account stream listen-key refresh repeatedly fails
+- stops old account socket before opening replacement socket
+- prevents duplicate account WebSocket listeners through Redis TTL ownership
 - drains in-flight command handling during shutdown
 
 ## Evidence

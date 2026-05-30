@@ -587,6 +587,9 @@ Rules:
 * If renewal fails, the service should stop owning that resource.
 * Another instance may reclaim ownership after TTL expiry.
 * The system must prevent duplicate WebSocket listeners for the same Redis record.
+* Ownership renewal and release must be atomic compare-and-expire or
+  compare-and-delete operations.
+* The owner must stop before another instance is likely to reclaim the key.
 
 Example:
 
@@ -600,6 +603,10 @@ Renew interval: 10 seconds
 Ownership rule:
 
 > A service may run a WebSocket listener only while it owns the corresponding Redis ownership key.
+
+Detailed rules for TTL ratios, atomic Lua operations, ownership loss, and
+duplicate listener prevention are defined in
+[WebSocket Runtime Ownership Blueprint](websocket-runtime-ownership-blueprint.md).
 
 ---
 
@@ -620,6 +627,8 @@ Every WebSocket manager should support:
 * Message timeout detection.
 * Resume/re-subscribe after reconnect.
 * Duplicate listener prevention.
+* Explicit stream readiness state.
+* Listen-key or session-key refresh when required.
 * Metrics.
 
 ---
@@ -691,6 +700,12 @@ For exchange APIs that require listen keys:
 * Recreate stream if refresh fails repeatedly.
 * Alert when refresh failure count exceeds threshold.
 * Stop old socket before creating a new one.
+* For quiet account/user-data streams, use heartbeat and listen-key freshness
+  for readiness instead of requiring frequent business messages.
+
+Detailed listen-key lifecycle, quiet stream readiness, and duplicate listener
+rules are defined in
+[WebSocket Runtime Ownership Blueprint](websocket-runtime-ownership-blueprint.md).
 
 ---
 
@@ -1163,6 +1178,7 @@ redis_publish_failures_total
 redis_pubsub_messages_published_total
 redis_pubsub_messages_received_total
 redis_ownership_renew_failures_total
+redis_ownership_lost_total
 redis_ownership_reclaims_total
 ```
 
@@ -1180,11 +1196,16 @@ ownership reclaim loop failing
 
 ```text
 websocket_connection_status
+websocket_active
 websocket_reconnect_attempts_total
 websocket_missed_pongs_total
 websocket_messages_received_total
 websocket_last_message_timestamp
+websocket_last_pong_timestamp
+websocket_ownership_status
 websocket_duplicate_listener_prevented_total
+listen_key_expires_timestamp
+listen_key_refresh_success_total
 listen_key_refresh_failures_total
 ```
 
@@ -1192,6 +1213,8 @@ Alert examples:
 
 ```text
 No messages received for expected active stream in N minutes
+Required market-data stream stale beyond freshness window
+Required quiet account stream heartbeat or listen key stale
 listen key refresh failures exceed threshold
 reconnect attempts exceed threshold
 ```
@@ -1238,6 +1261,8 @@ Every service should define behavior for these scenarios:
 * Redis pub/sub subscriber is down.
 * Redis ownership key expires.
 * Redis ownership renew fails.
+* Redis ownership value changes while WebSocket is running.
+* Ownership release races with another instance claim.
 * Redis reconnect causes duplicate subscriptions.
 * Redis command hangs.
 
@@ -1248,6 +1273,9 @@ Every service should define behavior for these scenarios:
 * Pong is missed.
 * Reconnect exceeds backoff cap.
 * Listen key refresh fails.
+* Quiet account stream receives no business messages but heartbeat is healthy.
+* Replacement socket opens before old socket stops.
+* Two instances race to open the same ownership-protected stream.
 * Exchange rate-limits connections.
 * Duplicate stream listener starts.
 * Subscription restore fails after reconnect.

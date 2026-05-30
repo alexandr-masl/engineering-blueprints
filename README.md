@@ -27,6 +27,7 @@ It is intended for:
 ### Architecture
 
 - [Microservice Resilience Blueprint](docs/architecture/microservice-resilience-blueprint.md)
+- [WebSocket Runtime Ownership Blueprint](docs/architecture/websocket-runtime-ownership-blueprint.md)
 
 ### Testing
 
@@ -34,6 +35,7 @@ It is intended for:
 - [RabbitMQ Resilience Tests](docs/testing/rabbitmq-resilience-tests.md)
 - [Redis Resilience Tests](docs/testing/redis-resilience-tests.md)
 - [WebSocket Resilience Tests](docs/testing/websocket-resilience-tests.md)
+- [WebSocket Integration Test Blueprint](docs/testing/websocket-integration-test-blueprint.md)
 
 ### Observability
 

@@ -10,6 +10,7 @@ Use integration tests for behavior that mocks cannot prove:
 - broker connection and channel recovery
 - cache and database outages
 - WebSocket reconnect behavior
+- WebSocket ownership, heartbeat, and listen-key lifecycle behavior
 - health endpoint transitions
 - graceful shutdown and drain behavior
 - schema, queue, topic, and subscription compatibility
@@ -46,6 +47,8 @@ Integration tests should:
 - dependency restart is detected
 - connections are recreated
 - consumers and subscriptions resume
+- WebSocket streams reclaim ownership, refresh session keys, and restore
+  subscriptions where applicable
 - readiness becomes true only after functional recovery
 
 ### Shutdown
@@ -67,6 +70,7 @@ Useful evidence includes:
 - database records
 - Redis keys or subscription effects
 - WebSocket messages
+- WebSocket heartbeat, ownership, and listen-key status
 - metrics samples
 - structured log events
 

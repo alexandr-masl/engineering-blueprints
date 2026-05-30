@@ -9,3 +9,4 @@ Start here:
 - [RabbitMQ Resilience Tests](rabbitmq-resilience-tests.md)
 - [Redis Resilience Tests](redis-resilience-tests.md)
 - [WebSocket Resilience Tests](websocket-resilience-tests.md)
+- [WebSocket Integration Test Blueprint](websocket-integration-test-blueprint.md)

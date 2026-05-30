@@ -12,6 +12,9 @@ optional cache, pub/sub transport, locking backend, or coordination store.
 - Redis pub/sub connection interruption
 - stale subscription after reconnect
 - lock acquisition failure
+- TTL ownership renew failure
+- ownership value changed by another instance
+- ownership release race
 - cache miss during Redis outage
 - timeout under high latency
 
@@ -24,6 +27,9 @@ Tests should assert:
 - pub/sub subscriptions are restored after reconnect
 - stale subscription state is detected
 - lock failures do not create duplicate unsafe work
+- ownership renew uses atomic compare-and-expire
+- ownership release uses atomic compare-and-delete
+- ownership loss stops the owned runtime component
 - Redis timeouts are bounded
 - metrics and logs identify Redis state transitions
 
@@ -35,6 +41,7 @@ Before implementing tests, classify Redis usage:
 - optional cache
 - pub/sub transport
 - lock provider
+- TTL ownership provider
 - rate limit backend
 - coordination state
 

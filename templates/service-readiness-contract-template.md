@@ -37,6 +37,15 @@
 | --- | --- | --- | --- | --- |
 |  |  |  |  |  |
 
+## WebSocket Streams
+
+| Stream | Kind | Required | Readiness signal | Ownership key | Listen-key/session refresh | Recovery behavior |
+| --- | --- | --- | --- | --- | --- | --- |
+|  | market-data/account-data/user-data/other |  |  |  |  |  |
+
+For quiet account or user-data streams, define whether readiness uses business
+message freshness or heartbeat/listen-key freshness.
+
 ## Background Loops and Timers
 
 | Component | Interval | Required | Success signal | Failure behavior |
@@ -71,4 +80,7 @@
 - [ ] Required dependency outage
 - [ ] Required dependency recovery
 - [ ] Required publisher proactive reconnect without a new publish
+- [ ] Required WebSocket stream outage and recovery
+- [ ] Ownership TTL expiry and reclaim, if ownership is used
+- [ ] Listen-key refresh failure and replacement, if listen keys are used
 - [ ] Graceful shutdown

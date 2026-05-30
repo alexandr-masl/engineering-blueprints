@@ -50,6 +50,8 @@ contract:
 - Redis is connected, if required.
 - Required Redis subscriptions are active, if applicable.
 - Required WebSocket streams are connected and fresh, if applicable.
+- Required quiet account/user-data WebSocket streams have fresh heartbeat,
+  ownership, and listen-key state, even when no business messages are expected.
 - Required timers and background loops have completed within their allowed
   success window.
 
